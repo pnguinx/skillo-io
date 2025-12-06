@@ -13,7 +13,10 @@ const startSocketServer = async () => {
    try {
       await dbConnect();
    } catch (err) {
-      console.error("FATAL: Database connection failed. Aborting startup.", err.message || err);
+      console.error(
+         "FATAL: Database connection failed. Aborting startup.",
+         err.message || err
+      );
       process.exit(1);
    }
 
@@ -71,12 +74,14 @@ const startSocketServer = async () => {
 
    const PORT = process.env.PORT || 8001;
 
-   server.listen(PORT, "0.0.0.0", () => {
-      console.log(`Socket.IO Server running on http://0.0.0.0:${PORT}`);
-   }).on('error', (err) => {
-      console.error('Server failed to start:', err.message || err);
-      process.exit(1);
-   });
+   server
+      .listen(PORT, "0.0.0.0", () => {
+         console.log(`Socket.IO Server running on http://0.0.0.0:${PORT}`);
+      })
+      .on("error", (err) => {
+         console.error("Server failed to start:", err.message || err);
+         process.exit(1);
+      });
 };
 
 startSocketServer().catch(console.error);
