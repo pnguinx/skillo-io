@@ -10,7 +10,12 @@ const socketController = require("./controller");
 const dbConnect = require("./dbConnect");
 
 const startSocketServer = async () => {
-   await dbConnect();
+   try {
+      await dbConnect();
+   } catch (err) {
+      console.error("FATAL: Database connection failed. Aborting startup.", err.message || err);
+      process.exit(1);
+   }
 
    const app = express();
    const server = http.createServer(app);
@@ -24,6 +29,7 @@ const startSocketServer = async () => {
       "http://localhost:8000",
       "http://192.168.100.2:3000",
       "http://10.195.144.132:3000",
+      "https://skillo-backend-production.up.railway.app/graphql",
    ];
 
    const corsOptions = {
@@ -67,6 +73,9 @@ const startSocketServer = async () => {
 
    server.listen(PORT, "0.0.0.0", () => {
       console.log(`Socket.IO Server running on http://0.0.0.0:${PORT}`);
+   }).on('error', (err) => {
+      console.error('Server failed to start:', err.message || err);
+      process.exit(1);
    });
 };
 
