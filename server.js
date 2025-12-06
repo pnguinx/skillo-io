@@ -10,62 +10,64 @@ const socketController = require("./controller");
 const dbConnect = require("./dbConnect");
 
 const startSocketServer = async () => {
-  await dbConnect();
+   await dbConnect();
 
-  const app = express();
-  const server = http.createServer(app);
+   const app = express();
+   const server = http.createServer(app);
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+   app.use(express.json());
+   app.use(express.urlencoded({ extended: true }));
 
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:4000",
-    "http://localhost:8000",
-    "http://192.168.100.2:3000",
-    "http://10.195.144.132:3000"
-  ];
+   const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:4000",
+      "http://localhost:8000",
+      "http://192.168.100.2:3000",
+      "http://10.195.144.132:3000",
+   ];
 
-  const corsOptions = {
-    origin: function (origin, callback) {
-      console.log("CORS Origin:", origin);
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  };
-
-  app.use(cors(corsOptions));
-
-  const io = new Server(server, {
-    cors: {
-      origin: allowedOrigins,
-      methods: ["GET", "POST"],
+   const corsOptions = {
+      origin: function (origin, callback) {
+         console.log("CORS Origin:", origin);
+         if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+         }
+         callback(new Error("Not allowed by CORS"));
+      },
       credentials: true,
-    },
-    connectionStateRecovery: {
-      maxDisconnectionDuration: 2 * 60 * 1000,
-      skipMiddlewares: true,
-    },
-  });
+   };
 
-  socketController.initializeSocketIO(io);
+   app.use(cors(corsOptions));
 
-  app.get("/", (req, res) => res.send("Socket.IO + REST backend is live"));
+   const io = new Server(server, {
+      cors: {
+         origin: allowedOrigins,
+         methods: ["GET", "POST"],
+         credentials: true,
+      },
+      connectionStateRecovery: {
+         maxDisconnectionDuration: 2 * 60 * 1000,
+         skipMiddlewares: true,
+      },
+   });
 
-  app.use("/socket", socketRoutes);
+   socketController.initializeSocketIO(io);
 
-  // Error handling middleware
-  app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send("Something broke!");
-  });
+   app.get("/", (req, res) => res.send("Socket.IO + REST backend is live"));
 
-  server.listen(8001, "0.0.0.0", () => {
-    console.log(`Socket.IO Server running on http://localhost:8001`);
-  });
+   app.use("/socket", socketRoutes);
+
+   // Error handling middleware
+   app.use((err, req, res, next) => {
+      console.error(err.stack);
+      res.status(500).send("Something broke!");
+   });
+
+   const PORT = process.env.PORT || 8001;
+
+   server.listen(PORT, "0.0.0.0", () => {
+      console.log(`Socket.IO Server running on http://0.0.0.0:${PORT}`);
+   });
 };
 
 startSocketServer().catch(console.error);
