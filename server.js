@@ -75,7 +75,7 @@ const startSocketServer = async () => {
    const PORT = process.env.PORT || 8001;
 
    server
-      .listen(PORT, "0.0.0.0", () => {
+      .listen(PORT, () => {
          console.log(`Socket.IO Server running on http://0.0.0.0:${PORT}`);
       })
       .on("error", (err) => {
