@@ -15,6 +15,14 @@ const messageSchema = new Schema(
       required: true,
     },
     content: { type: String },
+    images: [
+      {
+        url: { type: String, required: true },
+        key: { type: String, required: true },
+        width: { type: Number },
+        height: { type: Number },
+      },
+    ],
     offer: {
       amount: Number,
       status: {
@@ -25,13 +33,22 @@ const messageSchema = new Schema(
       counterOffer: Number,
       terms: String,
     },
-    type: { type: String, enum: ["message", "offer"], default: "message" },
+    type: {
+      type: String,
+      enum: ["message", "offer", "image"],
+      default: "message",
+    },
     status: {
       type: String,
       enum: ["sent", "delivered", "seen"],
       default: "sent",
     },
     conversationId: { type: String },
+    replyTo: {
+      type: Schema.Types.ObjectId,
+      ref: "MessageModel",
+      default: null,
+    },
   },
   { timestamps: true }
 );

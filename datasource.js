@@ -71,20 +71,58 @@ const handleAuthentication = (socket) => async (userId, callback) => {
 
 const handleSendMessage =
   (socket) =>
-  async ({ sender, recipient, conversationId, booking, content }, callback) => {
+  async (
+    { sender, recipient, conversationId, booking, content, images, replyTo },
+    callback
+  ) => {
     try {
       console.log("Sending message from", sender, "to", recipient);
+      console.log("📧 Message data received:", {
+        sender,
+        recipient,
+        conversationId,
+        booking,
+        content,
+        images,
+        replyTo,
+      });
+      console.log("🔗 ReplyTo field:", replyTo);
+
+      // Determine message type based on content
+      const hasImages = images && images.length > 0;
+      const hasContent = content && content.trim().length > 0;
+      let messageType = "message";
+      if (hasImages && !hasContent) {
+        messageType = "image";
+      } else if (hasImages && hasContent) {
+        messageType = "image"; // Mixed content treated as image type
+      }
+
       let message = new Message({
         sender,
         recipient,
         booking,
         content,
+        images: images || [],
         conversationId,
-        type: "message",
+        type: messageType,
+        replyTo: replyTo || null,
       });
+
+      console.log(
+        "💾 Message object before save:",
+        JSON.stringify(message, null, 2)
+      );
+      console.log("🔍 Message.replyTo before save:", message.replyTo);
+
       const response = await message.save();
 
-      console.log("Message saved with ID:", response);
+      console.log("✅ Message saved with ID:", response._id);
+      console.log("🔍 Saved message.replyTo:", response.replyTo);
+
+      console.log("Message saved with ID:", response._id);
+      console.log("💾 Saved message replyTo:", response.replyTo);
+      console.log("📄 Full saved message:", JSON.stringify(response, null, 2));
 
       const receiverSocketId = onlineUsers.get(recipient);
       console.log("🎯 Receiver socket ID:", receiverSocketId);
@@ -94,7 +132,14 @@ const handleSendMessage =
           message._id,
           { status: "delivered" },
           { new: true }
-        );
+        ).populate({
+          path: "replyTo",
+          select: "content type sender offer images",
+          populate: {
+            path: "sender",
+            select: "first_name last_name _id",
+          },
+        });
         message = deliveredMessage;
 
         io.to(receiverSocketId).emit("new-message", {
@@ -102,6 +147,18 @@ const handleSendMessage =
           status: "delivered",
         });
         console.log("📤 Delivered message to recipient");
+      }
+
+      // Populate replyTo for the callback response
+      if (message.replyTo) {
+        await message.populate({
+          path: "replyTo",
+          select: "content type sender offer images",
+          populate: {
+            path: "sender",
+            select: "first_name last_name _id",
+          },
+        });
       }
 
       if (callback) {
